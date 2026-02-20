@@ -1,2 +1,1 @@
-# amazing-maze
-# amazing-maze
+# AmAzInG MaZe
