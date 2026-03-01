@@ -1,4 +1,1 @@
-# AmAzInG MaZe
-
-## Description
-
+# a-maze-in
