@@ -78,3 +78,51 @@ def parse_config(filepath: str) -> dict[str, str]:
         raise NoValidEntries("Config file is empty or has no valid entries")
 
     return config
+
+
+def validate_config(config: dict[str, str]):
+    mandatory_keys = [
+        "WIDTH",
+        "HEIGHT",
+        "ENTRY",
+        "EXIT",
+        "OUTPUT_FILE",
+        "PERFECT"
+    ]
+
+    addational_keys = [
+        "SEED",
+        "ALGO",
+        "MODE"
+    ]
+    clean_config = {}
+
+    for key, value in config:
+        if key not in mandatory_keys or not value:
+            if key not in addational_keys or not value:
+                raise ValueError()
+        # Width
+        if key == "WIDTH":
+            try:
+                config[key] = int(value)
+                if config[key] < 0:
+                    raise ValueError("width cannot be negative.")
+                elif config[key] < 3:
+                    raise ValueError("width must be greater than"
+                                     " or equal to 3")
+                else:
+                    clean_config[key] = int(value)
+            except ValueError:
+                raise ValueError("the value width is error")
+        if key == "HEIGHT":
+            try:
+                config[key] = int(value)
+                if config[key] < 0:
+                    raise ValueError("height cannot be negative.")
+                elif config[key] < 3:
+                    raise ValueError("height must be greater than"
+                                     " or equal to 3")
+                else:
+                    clean_config[key] = int(value)
+            except ValueError:
+                raise ValueError("the value height is error")
