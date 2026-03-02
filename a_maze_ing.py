@@ -1,4 +1,4 @@
-from mazegen.config_parser import config_parser
+from mazegen.parser_config import config_parser
 
 
 def main() -> None:
