@@ -17,6 +17,18 @@ class InvalidSyntax(ValueError):
     pass
 
 
+class Point:
+    def __init__(self, x: int = 0, y: int = 0) -> None:
+        """Initialize a Point with x and y coordinates.
+
+        Args:
+            x: The horizontal coordinate.
+            y: The vertical coordinate.
+        """
+        self.x = x
+        self.y = y
+
+
 def parse_config(filepath: str) -> dict[str, str]:
     """Parse a KEY=VALUE config file.
 
@@ -81,48 +93,90 @@ def parse_config(filepath: str) -> dict[str, str]:
 
 
 def validate_config(config: dict[str, str]):
-    mandatory_keys = [
-        "WIDTH",
-        "HEIGHT",
-        "ENTRY",
-        "EXIT",
-        "OUTPUT_FILE",
-        "PERFECT"
-    ]
+    """Validate and convert raw config values into their proper types.
 
-    addational_keys = [
-        "SEED",
-        "ALGO",
-        "MODE"
-    ]
-    clean_config = {}
+    Args:
+        config: Raw string dictionary from parse_config.
 
-    for key, value in config:
-        if key not in mandatory_keys or not value:
-            if key not in addational_keys or not value:
-                raise ValueError()
+    Returns:
+        Clean dictionary with properly typed values.
+
+    Raises:
+        ValueError: If any value is invalid or a mandatory key is missing.
+    """
+    mandatory_keys = {"WIDTH", "HEIGHT", "ENTRY", "EXIT",
+                      "OUTPUT_FILE", "PERFECT"}
+    optional_keys = {"SEED"}
+    allowed_keys = mandatory_keys | optional_keys
+    validated = {}
+
+    for key in mandatory_keys:
+        if key not in config:
+            raise ValueError(f"[ERROR]: Missing mandatory key '{key}'")
+
+    for key, value in config.items():
+        if key not in allowed_keys:
+            raise ValueError(f"[ERROR]: Unknown key '{key}'")
+
+        if not value:
+            raise ValueError(f"[ERROR]: Value for '{key}' cannot be empty")
         # Width
         if key == "WIDTH":
+            #! Handle that we shouldn't print
+            #! 42 pattern in case of be less than 3
             try:
-                config[key] = int(value)
-                if config[key] < 0:
-                    raise ValueError("width cannot be negative.")
-                elif config[key] < 3:
-                    raise ValueError("width must be greater than"
-                                     " or equal to 3")
-                else:
-                    clean_config[key] = int(value)
+                validated[key] = int(value)
             except ValueError:
-                raise ValueError("the value width is error")
+                raise ValueError("[ERROR]: WIDTH must be an integer")
+            if validated[key] < 3:
+                raise ValueError("[ERROR]: WIDTH must be greater than 2")
+
         if key == "HEIGHT":
             try:
-                config[key] = int(value)
-                if config[key] < 0:
-                    raise ValueError("height cannot be negative.")
-                elif config[key] < 3:
-                    raise ValueError("height must be greater than"
-                                     " or equal to 3")
-                else:
-                    clean_config[key] = int(value)
+                validated[key] = int(value)
             except ValueError:
-                raise ValueError("the value height is error")
+                raise ValueError("[ERROR]: HEIGHT must be an integer")
+            if validated[key] < 3:
+                raise ValueError("[ERROR]: HEIGHT must be greater than 2")
+
+        if key == "ENTRY":
+            # Parsing the 0,0 value
+            entry = Point()
+            entry.x, entry.y = value.split(',')
+            entry.x = int(entry.x)
+            entry.y = int(entry.y)
+
+        if key == "EXIT":
+            # Parsing the 0,0 value
+            target = Point()
+            target.x, target.y = value.split(',')
+            target.x = int(target.x)
+            target.y = int(target.y)
+
+        if key == "OUTPUT_FILE":
+            filename = value
+            try:
+                with open(filename, 'w') as f:
+                    f.write("")
+            except PermissionError:
+                raise PermissionError("[ERROR]: Cannot write to file.")
+            validated[key] = filename
+
+        if key == "PERFECT":
+            value = value.lower()
+            if value != "false" and value != "true":
+                raise ValueError("[ERROR]: PERFECT must be 'True' or 'False'")
+            value = value == "true"
+            validated[key] = value
+
+        if key == "SEED":
+            try:
+                validated[key] = int(value)
+            except ValueError:
+                raise ValueError("[ERROR]: Seed should be a number.")
+
+    #! check that
+    if "SEED" not in validated:
+        validated.setdefault("SEED", 42)
+
+    return validated
