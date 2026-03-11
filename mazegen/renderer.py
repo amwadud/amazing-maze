@@ -1,4 +1,8 @@
-def render(grid: List[List[int]], width: int, height: int, locked: set = set()) -> None:
+from globals import EAST, SOUTH
+
+
+def renderer(grid: list[list[int]],
+             width: int, height: int, locked: set = set()) -> None:
     # Box drawing characters
     H = "━"
     V = "┃"

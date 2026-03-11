@@ -29,11 +29,11 @@ class Point:
         self.y = y
 
 
-def parse_config(filepath: str) -> dict[str, str]:
+def parse_config(fp: str) -> dict[str, str]:
     """Parse a KEY=VALUE config file.
 
     Args:
-        filepath: Path to the configuration file.
+        fp: Path to the configuration file.
 
     Returns:
         Dictionary of key-value pairs.
@@ -44,24 +44,24 @@ def parse_config(filepath: str) -> dict[str, str]:
     """
     config = {}
 
-    # TODO: validate that filepath is not an empty string before even trying
+    # TODO: validate that fp is not an empty string before even trying
     # TODO: validate required keys after parsing (WIDTH, HEIGHT, ENTRY, EXIT, etc.)
     # TODO: validate value types (WIDTH should be int, PERFECT should be bool, etc.)
     # TODO: validate that ENTRY and EXIT are within maze bounds
     # TODO: decide max file size limit? a huge config file would be unusual
 
     try:
-        f_path = Path(filepath)
+        f_path = Path(fp)
     except TypeError:
-        # Path() raises TypeError if filepath is None or not a string
-        raise TypeError(f"filepath must be a string, got {type(filepath).__name__}")
+        # Path() raises TypeError if fp is None or not a string
+        raise TypeError(f"fp must be a string, got {type(fp).__name__}")
 
     if not f_path.exists():
-        raise FileNotFoundError(f"Config file not found: '{filepath}'")
+        raise FileNotFoundError(f"Config file not found: '{fp}'")
 
     if not f_path.is_file():
-        # catches the case where filepath points to a directory
-        raise ValueError(f"'{filepath}' is not a file")
+        # catches the case where fp points to a directory
+        raise ValueError(f"'{fp}' is not a file")
 
     with f_path.open() as f:
         for i, line in enumerate(f, 1):
@@ -122,8 +122,8 @@ def validate_config(config: dict[str, str]):
             raise ValueError(f"[ERROR]: Value for '{key}' cannot be empty")
         # Width
         if key == "WIDTH":
-            #! Handle that we shouldn't print
-            #! 42 pattern in case of be less than 3
+            # FIXME: andle that we shouldn't print
+            # FIXME: 42 pattern in case of be less than 3
             try:
                 validated[key] = int(value)
             except ValueError:
@@ -175,7 +175,7 @@ def validate_config(config: dict[str, str]):
             except ValueError:
                 raise ValueError("[ERROR]: Seed should be a number.")
 
-    #! check that
+    # FIXME: check that
     if "SEED" not in validated:
         validated.setdefault("SEED", 42)
 

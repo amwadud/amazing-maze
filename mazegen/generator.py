@@ -1,65 +1,17 @@
 #!/usr/bin/env python3
 import random
-from typing import List, Tuple, Optional
 from renderer import renderer
-
-# Gruvbox colors (ANSI escape codes)
-# [*ANSI = a standard for colors in the terminal*]
-RESET = "\033[0m"
-WALL = "\033[38;2;40;40;40m\033[48;2;40;40;40m"  # dark background
-CELL = "\033[48;2;50;48;47m"  # gruvbox bg
-LOCKED = "\033[38;2;251;73;52m\033[48;2;251;73;52m"  # gruvbox red for "42"
-PATH = "\033[48;2;184;187;38m"  # gruvbox yellow
-
-# Wall bits
-NORTH = 0b0001
-EAST = 0b0010
-SOUTH = 0b0100
-WEST = 0b1000
-
-OPPOSITE = {
-    NORTH: SOUTH,
-    SOUTH: NORTH,
-    EAST: WEST,
-    WEST: EAST,
-}
-
-DIRECTION = {
-    NORTH: (0, -1),
-    EAST: (1, 0),
-    SOUTH: (0, 1),
-    WEST: (-1, 0),
-}
-
-PATTERN_4 = [
-    [1, 0, 1, 0, 0],
-    [1, 0, 1, 0, 0],
-    [1, 0, 1, 0, 0],
-    [1, 1, 1, 1, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-]
-
-PATTERN_2 = [
-    [1, 1, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [1, 1, 1, 0, 0],
-    [1, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0],
-    [1, 1, 1, 0, 0],
-]
+from globals import PATTERN_2, PATTERN_4, OPPOSITE, DIRECTION
 
 
 class MazeGenerator:
     def __init__(
-        self, width: int, height: int, seed: Optional[int] = None
+        self, width: int, height: int, seed: int | None = None
     ) -> None:
         self.width = width
         self.height = height
         self.seed = seed if seed is not None else random.randint(0, 999999)
-        self.grid: List[List[int]] = [[0xF] * width for _ in range(height)]
+        self.grid: list[list[int]] = [[0xF] * width for _ in range(height)]
         self.locked: set = set()
 
     def _stamp_42(self) -> None:
@@ -72,8 +24,8 @@ class MazeGenerator:
             print("Maze too small to display '42' pattern.")
             return
 
-        start_x = (self.width - total_w) // 2
-        start_y = (self.height - pattern_h) // 2
+        start_x: int = (self.width - total_w) // 2
+        start_y: int = (self.height - pattern_h) // 2
 
         for row in range(pattern_h):
             for col in range(pattern_w):
@@ -99,7 +51,7 @@ class MazeGenerator:
 
     def _get_unvisited_neighbors(
         self, x: int, y: int, visited: set
-    ) -> List[Tuple[int, int, int]]:
+    ) -> list[tuple[int, int, int]]:
         neighbors = []
         for direction, (dx, dy) in DIRECTION.items():
             nx, ny = x + dx, y + dy
@@ -138,4 +90,4 @@ class MazeGenerator:
 if __name__ == "__main__":
     mg = MazeGenerator(30, 20)
     mg.generate()
-    render(mg.grid, mg.width, mg.height, mg.locked)
+    renderer(mg.grid, mg.width, mg.height, mg.locked)
