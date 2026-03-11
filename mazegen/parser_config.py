@@ -45,8 +45,8 @@ def parse_config(fp: str) -> dict[str, str]:
     config = {}
 
     # TODO: validate that fp is not an empty string before even trying
-    # TODO: validate required keys after parsing (WIDTH, HEIGHT, ENTRY, EXIT, etc.)
-    # TODO: validate value types (WIDTH should be int, PERFECT should be bool, etc.)
+    # TODO: validate required keys after parsing (WIDTH, HEIGHT, ENTRY, EXIT)
+    # TODO: validate value types (WIDTH should be int, PERFECT should be bool)
     # TODO: validate that ENTRY and EXIT are within maze bounds
     # TODO: decide max file size limit? a huge config file would be unusual
 
