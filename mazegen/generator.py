@@ -1,93 +1,127 @@
 #!/usr/bin/env python3
+"""Maze generator using iterative DFS (recursive backtracker algorithm)."""
+
 import random
-from renderer import renderer
-from globals import PATTERN_2, PATTERN_4, OPPOSITE, DIRECTION
+
+from .constants import NORTH, EAST, SOUTH, WEST, OPPOSITE, DIRECTION
+from .constants import PATTERN_4, PATTERN_2
 
 
 class MazeGenerator:
+    """Maze generator using iterative DFS (recursive backtracker).
+
+    Quick start:
+        mg = MazeGenerator(20, 15, seed=42, perfect=True)
+        mg.generate()
+        # mg.grid   — 2-D list[list[int]], each cell is a 4-bit wall bitmask
+        # mg.locked — set of (x, y) cells belonging to the "42" pattern
+    """
+
     def __init__(
-        self, width: int, height: int, seed: int | None = None
+        self, width: int, height: int, seed: int | None = None, perfect: bool = True
     ) -> None:
-        self.width = width
-        self.height = height
-        self.seed = seed if seed is not None else random.randint(0, 999999)
-        self.grid: list[list[int]] = [[0xF] * width for _ in range(height)]
-        self.locked: set = set()
+        """Args:
+            width:   Number of columns (>= 3).
+            height:  Number of rows    (>= 3).
+            seed:    RNG seed for reproducibility. Random if None.
+            perfect: True = one path between any two cells (no loops).
+        """
+        self.width   = width
+        self.height  = height
+        self.seed    = seed if seed is not None else random.randint(0, 999_999)
+        self.perfect = perfect
+        self.grid:   list[list[int]]      = [[0xF] * width for _ in range(height)]
+        self.locked: set[tuple[int, int]] = set()
 
-    def _stamp_42(self) -> None:
-        pattern_w = 5
-        pattern_h = 7
-        gap = 1
-        total_w = pattern_w * 2 + gap
-
-        if self.width < total_w + 2 or self.height < pattern_h + 2:
-            print("Maze too small to display '42' pattern.")
-            return
-
-        start_x: int = (self.width - total_w) // 2
-        start_y: int = (self.height - pattern_h) // 2
-
-        for row in range(pattern_h):
-            for col in range(pattern_w):
-                if PATTERN_4[row][col]:
-                    cx = start_x + col
-                    cy = start_y + row
-                    self.grid[cy][cx] = 0xF
-                    self.locked.add((cx, cy))
-                if PATTERN_2[row][col]:
-                    cx = start_x + pattern_w + gap + col
-                    cy = start_y + row
-                    self.grid[cy][cx] = 0xF
-                    self.locked.add((cx, cy))
+    # ── helpers ───────────────────────────────────────────────────────────────
 
     def _in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def _remove_wall(
-        self, x1: int, y1: int, x2: int, y2: int, direction: int
-    ) -> None:
-        self.grid[y1][x1] &= ~direction
-        self.grid[y2][x2] &= ~OPPOSITE[direction]
+    def _remove_wall(self, x1: int, y1: int, x2: int, y2: int, d: int) -> None:
+        """Open the wall between (x1,y1) and (x2,y2) in direction d."""
+        self.grid[y1][x1] &= ~d
+        self.grid[y2][x2] &= ~OPPOSITE[d]
 
-    def _get_unvisited_neighbors(
-        self, x: int, y: int, visited: set
+    def _get_neighbors(
+        self, x: int, y: int, visited: set[tuple[int, int]]
     ) -> list[tuple[int, int, int]]:
-        neighbors = []
-        for direction, (dx, dy) in DIRECTION.items():
-            nx, ny = x + dx, y + dy
-            if (
-                self._in_bounds(nx, ny)
-                and (nx, ny) not in visited
-                and (nx, ny) not in self.locked
-            ):
-                neighbors.append((nx, ny, direction))
-        return neighbors
+        """Return unvisited, unlocked neighbors as (nx, ny, direction)."""
+        return [
+            (x + dx, y + dy, d)
+            for d, (dx, dy) in DIRECTION.items()
+            if self._in_bounds(x + dx, y + dy)
+            and (x + dx, y + dy) not in visited
+            and (x + dx, y + dy) not in self.locked
+        ]
+
+    def _stamp_42(self) -> None:
+        """Lock cells forming the '42' pattern at the center of the maze."""
+        pw, ph = len(PATTERN_4[0]), len(PATTERN_4)
+        total  = pw * 2
+
+        if self.width < total + 2 or self.height < ph + 2:
+            print("Warning: maze too small for '42' pattern — skipped.")
+            return
+
+        sx = (self.width  - total) // 2
+        sy = (self.height - ph)    // 2
+
+        for row in range(ph):
+            for col in range(pw):
+                if PATTERN_4[row][col]:
+                    self.locked.add((sx + col,      sy + row))
+                if PATTERN_2[row][col]:
+                    self.locked.add((sx + pw + col, sy + row))
+
+    def _add_loops(self, ratio: float = 0.1) -> None:
+        """Remove ~ratio% of remaining walls to create shortcuts."""
+        for y in range(self.height):
+            for x in range(self.width):
+                if (x, y) in self.locked:
+                    continue
+                for d, (dx, dy) in DIRECTION.items():
+                    nx, ny = x + dx, y + dy
+                    if (
+                        self._in_bounds(nx, ny)
+                        and (nx, ny) not in self.locked
+                        and self.grid[y][x] & d
+                        and random.random() < ratio
+                    ):
+                        self._remove_wall(x, y, nx, ny, d)
+
+    # ── public API ────────────────────────────────────────────────────────────
 
     def generate(self) -> None:
+        """Generate the maze in-place using iterative DFS."""
         random.seed(self.seed)
         self._stamp_42()
 
-        start = (0, 0)
-        while start in self.locked:
-            start = (start[0] + 1, start[1])
-
-        visited = {start} | self.locked
-        stack = [start]
+        visited: set[tuple[int, int]] = {(0, 0)} | self.locked
+        stack:   list[tuple[int, int]] = [(0, 0)]
 
         while stack:
             x, y = stack[-1]
-            neighbors = self._get_unvisited_neighbors(x, y, visited)
-
+            neighbors = self._get_neighbors(x, y, visited)
             if neighbors:
-                nx, ny, direction = random.choice(neighbors)
-                self._remove_wall(x, y, nx, ny, direction)
+                nx, ny, d = random.choice(neighbors)
+                self._remove_wall(x, y, nx, ny, d)
                 visited.add((nx, ny))
                 stack.append((nx, ny))
             else:
                 stack.pop()
 
+        # Locked cells must stay fully walled — restore any accidental carves.
+        for cx, cy in self.locked:
+            self.grid[cy][cx] = 0xF
+
+        if not self.perfect:
+            self._add_loops()
+
 
 if __name__ == "__main__":
-    mg = MazeGenerator(30, 20)
+    width = int(input("Enter width for the maze: "))
+    height = int(input("Enter height for the maze: "))
+    mg = MazeGenerator(width, height)
     mg.generate()
-    renderer(mg.grid, mg.width, mg.height, mg.locked)
+    render(mg.grid, mg.width, mg.height, locked=mg.locked)

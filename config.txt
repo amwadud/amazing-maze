@@ -1,9 +1,8 @@
 # A-Maze-ing default configuration
-WIDTH=20
-HEIGHT=15
+WIDTH=18
+HEIGHT=12
 ENTRY=0,0
-EXIT=19,14
+EXIT=9,9
 OUTPUT_FILE=maze.txt
 PERFECT=True
-SEED=42
-ALGORITHM=recursive_backtracker
+SEED=1337
