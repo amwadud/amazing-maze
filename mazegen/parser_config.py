@@ -145,6 +145,7 @@ def validate_config(config: dict[str, str]):
             entry.x, entry.y = value.split(',')
             entry.x = int(entry.x)
             entry.y = int(entry.y)
+            validated[key] = entry
 
         if key == "EXIT":
             # Parsing the 0,0 value
@@ -152,6 +153,7 @@ def validate_config(config: dict[str, str]):
             target.x, target.y = value.split(',')
             target.x = int(target.x)
             target.y = int(target.y)
+            validated[key] = target
 
         if key == "OUTPUT_FILE":
             filename = value
