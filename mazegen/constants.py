@@ -40,7 +40,6 @@ DIRECTION: dict[int, tuple[int, int]] = {
     WEST:  (-1, 0),
 }
 
-
 # ── "42" pixel patterns ───────────────────────────────────────────────────────
 # Two 5-row × 4-col grids of 1s and 0s.
 # 1 = locked cell (fully walled, shown as ▓▓▓ in the TUI).
