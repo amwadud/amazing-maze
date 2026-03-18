@@ -2,18 +2,27 @@
 """Maze generator using iterative DFS (recursive backtracker algorithm)."""
 
 import random
-
-from display import render_tui
+from abc import ABC, abstractmethod
+from typing import Any
 
 from .constants import DIRECTION, OPPOSITE, PATTERN_2, PATTERN_4
 
 
-class MazeGenerator:
-    """Maze generator using iterative DFS (recursive backtracker).
+class MazeGenerator(ABC):
+    """Abstract base class for maze generators.
 
     Quick start:
-        mg = MazeGenerator(20, 15, seed=42, perfect=True)
+        # Perfect maze
+        from mazegen import PerfectMazeGenerator
+        mg = PerfectMazeGenerator(20, 15, seed=42)
         mg.generate()
+
+        # Imperfect maze (with loops)
+        from mazegen import ImperfectMazeGenerator
+        mg = ImperfectMazeGenerator(20, 15, seed=42)
+        mg.generate()
+
+        # Access the generated maze
         # mg.grid   — 2-D list[list[int]], each cell is a 4-bit wall bitmask
         # mg.locked — set of (x, y) cells belonging to the "42" pattern
     """
@@ -23,27 +32,20 @@ class MazeGenerator:
         width: int,
         height: int,
         seed: int | None = None,
-        perfect: bool = True,
     ) -> None:
         """Args:
         width:   Number of columns (>= 3).
         height:  Number of rows    (>= 3).
         seed:    RNG seed for reproducibility. Random if None.
-        perfect: True = one path between any two cells (no loops).
         """
         self.width = width
         self.height = height
         self.seed = seed
-        self.perfect = perfect
         self.grid: list[list[int]] = [[0xF] * width for _ in range(height)]
         self.locked: set[tuple[int, int]] = set()
 
     def _reinit_grid(self) -> None:
-        self.grid: list[list[int]] = [
-            [0xF] * self.width for _ in range(self.height)
-        ]
-
-    # ── helpers ─────────────────────────────────────────────────────────────
+        self.grid = [[0xF] * self.width for _ in range(self.height)]
 
     def _in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
@@ -84,32 +86,10 @@ class MazeGenerator:
                 if PATTERN_2[row][col]:
                     self.locked.add((sx + pw + col, sy + row))
 
-    def _add_loops(self, ratio: float = 0.1) -> None:
-        """Remove ~ratio% of remaining walls to create shortcuts."""
-        for y in range(self.height):
-            for x in range(self.width):
-                if (x, y) in self.locked:
-                    continue
-                for d, (dx, dy) in DIRECTION.items():
-                    nx, ny = x + dx, y + dy
-                    if (
-                        self._in_bounds(nx, ny)
-                        and (nx, ny) not in self.locked
-                        and self.grid[y][x] & d
-                        and random.random() < ratio
-                    ):
-                        self._remove_wall(x, y, nx, ny, d)
-
-    # ── public API ──────────────────────────────────────────────────────────
-
-    def generate(self) -> None:
-        """Generate the maze in-place using iterative DFS."""
-        self._reinit_grid()
-        random.seed(self.seed)  # None → system entropy (random); int →
-        self._stamp_42()
-
-        visited: set[tuple[int, int]] = {(0, 0)} | self.locked
-        stack: list[tuple[int, int]] = [(0, 0)]
+    def _run_dfs(self, start: tuple[int, int] = (0, 0)) -> None:
+        """Run recursive backtracker algorithm from start position."""
+        visited: set[tuple[int, int]] = {start} | self.locked
+        stack: list[tuple[int, int]] = [start]
 
         while stack:
             x, y = stack[-1]
@@ -122,17 +102,99 @@ class MazeGenerator:
             else:
                 stack.pop()
 
-        # Locked cells must stay fully walled — restore any accidental carves.
         for cx, cy in self.locked:
             self.grid[cy][cx] = 0xF
 
-        if not self.perfect:
-            self._add_loops()
+    @abstractmethod
+    def generate(self) -> None:
+        """Generate the maze in-place."""
+        ...
+
+
+class PerfectMazeGenerator(MazeGenerator):
+    """Generate a perfect maze with exactly one path between any two cells."""
+
+    def generate(self) -> None:
+        """Generate a perfect maze (no loops) using iterative DFS."""
+        self._reinit_grid()
+        random.seed(self.seed)
+        self._stamp_42()
+        self._run_dfs()
+
+
+class ImperfectMazeGenerator(MazeGenerator):
+    """Generate an imperfect maze with loops/shortcuts."""
+
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        seed: int | None = None,
+        loop_ratio: float = 0.1,
+    ) -> None:
+        """Args:
+        width:      Number of columns (>= 3).
+        height:    Number of rows    (>= 3).
+        seed:      RNG seed for reproducibility. Random if None.
+        loop_ratio: Fraction of walls to remove (default 0.1 = 10%).
+        """
+        super().__init__(width, height, seed)
+        self.loop_ratio = loop_ratio
+
+    def _add_loops(self) -> None:
+        """Remove ~ratio% of remaining walls to create shortcuts."""
+        for y in range(self.height):
+            for x in range(self.width):
+                if (x, y) in self.locked:
+                    continue
+                for d, (dx, dy) in DIRECTION.items():
+                    nx, ny = x + dx, y + dy
+                    if (
+                        self._in_bounds(nx, ny)
+                        and (nx, ny) not in self.locked
+                        and self.grid[y][x] & d
+                        and random.random() < self.loop_ratio
+                    ):
+                        self._remove_wall(x, y, nx, ny, d)
+
+    def generate(self) -> None:
+        """Generate an imperfect maze (with loops) using iterative DFS."""
+        self._reinit_grid()
+        random.seed(self.seed)
+        self._stamp_42()
+        self._run_dfs()
+        self._add_loops()
+
+
+def create_generator(
+    width: int,
+    height: int,
+    seed: int | None = None,
+    perfect: bool = True,
+    **kwargs: Any,
+) -> MazeGenerator:
+    """Factory to create the appropriate maze generator.
+
+    Args:
+        width:   Number of columns (>= 3).
+        height:  Number of rows    (>= 3).
+        seed:    RNG seed for reproducibility. Random if None.
+        perfect: If True, returns PerfectMazeGenerator.
+        **kwargs: Additional arguments passed to the generator.
+
+    Returns:
+        PerfectMazeGenerator or ImperfectMazeGenerator instance.
+    """
+    if perfect:
+        return PerfectMazeGenerator(width, height, seed)
+    return ImperfectMazeGenerator(width, height, seed, **kwargs)
 
 
 if __name__ == "__main__":
     width = int(input("Enter width for the maze: "))
     height = int(input("Enter height for the maze: "))
-    mg = MazeGenerator(width, height)
+    mg = PerfectMazeGenerator(width, height)
     mg.generate()
+    from display import render_tui
+
     render_tui(mg.grid, mg.width, mg.height, locked=mg.locked)

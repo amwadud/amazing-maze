@@ -10,12 +10,12 @@ def _has(grid, x, y, d):
 
 
 def _on_path(x, y, path, entry, exit_):
-    """Returns True if cell (x, y) is the entry, exit, or on the solution path."""
+    """Check if cell is entry, exit, or on solution path."""
     return (x, y) in path or (x, y) == entry or (x, y) == exit_
 
 
 def _gap(x1, y1, x2, y2, path, entry, exit_, theme):
-    """Returns a colored gap if both neighboring cells are on the path, otherwise empty."""
+    """Returns colored gap if both cells on path, otherwise empty."""
     # color the gap only if both neighboring cells are on the path
     if _on_path(x1, y1, path, entry, exit_) and _on_path(
         x2, y2, path, entry, exit_
