@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-from mazegen import parse_config, validate_config, maze_solver
-from mazegen import MazeGenerator
+from mazegen import (
+    parse_config,
+    validate_config,
+    maze_solver,
+    MazeGenerator,
+    COLOR_THEMES,
+    submit_data
+)
 from display import renderer_tui
-from mazegen import COLOR_THEMES
 import os
 import random
 
@@ -13,7 +18,9 @@ def main() -> None:
     maze.generate()
     theme = COLOR_THEMES[0]
     show_path: bool = False
-    path, _ = maze_solver(maze.grid, config["ENTRY"], config["EXIT"])
+    path, path_directions = maze_solver(
+        maze.grid, config["ENTRY"], config["EXIT"]
+    )
 
     try:
         while True:
@@ -40,6 +47,7 @@ def main() -> None:
                 path, _ = maze_solver(
                     maze.grid, config["ENTRY"], config["EXIT"]
                 )
+                submit_data(config, path_directions)
 
             elif choice == "2":
                 theme = random.choice([t for t in COLOR_THEMES if t != theme])

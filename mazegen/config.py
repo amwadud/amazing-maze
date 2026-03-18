@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from typing import Any
 
 
 # ── Custom exceptions ───────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ Values are returned as raw strings — use validate_config() to type-cast them.
 # ── Validator ───────────────────────────────────────────────────────────────
 
 
-def validate_config(config: dict[str, str]) -> dict:
+def validate_config(config: dict[str, str]) -> dict[str, Any]:
     """Validate and type-cast raw config values from parse_config().
 
     Args:
