@@ -9,6 +9,7 @@ PATH_DIRECTION = {
     'W': (-1, 0, WEST),
 }
 
+
 def maze_solver(
     grid: list[list[int]],
     entry: tuple[int, int],

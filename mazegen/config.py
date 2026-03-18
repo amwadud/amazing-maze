@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 
 
-# ── Custom exceptions ─────────────────────────────────────────────────────────
+# ── Custom exceptions ───────────────────────────────────────────────────────
 
 
 class DuplicateConfig(ValueError):
@@ -21,21 +21,21 @@ class InvalidSyntax(ValueError):
     """Raised when a line is not a comment, not blank, and has no '=' sign."""
 
 
-# ── Config keys ───────────────────────────────────────────────────────────────
+# ── Config keys ─────────────────────────────────────────────────────────────
 
 MANDATORY_KEYS = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
 OPTIONAL_KEYS = {"SEED"}
 ALLOWED_KEYS = MANDATORY_KEYS | OPTIONAL_KEYS
 
 
-# ── Parser ────────────────────────────────────────────────────────────────────
+# ── Parser ──────────────────────────────────────────────────────────────────
 
 
 def parse_config(fp: str) -> dict[str, str]:
     """Parse a KEY=VALUE config file into a raw string dictionary.
 
     Lines starting with '#' and blank lines are ignored.
-    Values are returned as raw strings — use validate_config() to type-cast them.
+Values are returned as raw strings — use validate_config() to type-cast them.
 
     Args:
         fp: Path to the configuration file.
@@ -100,7 +100,7 @@ def parse_config(fp: str) -> dict[str, str]:
     return config
 
 
-# ── Validator ─────────────────────────────────────────────────────────────────
+# ── Validator ───────────────────────────────────────────────────────────────
 
 
 def validate_config(config: dict[str, str]) -> dict:
@@ -124,19 +124,19 @@ def validate_config(config: dict[str, str]) -> dict:
     """
     validated: dict = {}
 
-    # ── check all mandatory keys are present ──────────────────────────────────
+    # ── check all mandatory keys are present ────────────────────────────────
     missing = MANDATORY_KEYS - config.keys()
     if missing:
         raise ValueError(
             f"Missing mandatory keys: {', '.join(sorted(missing))}"
         )
 
-    # ── reject unknown keys ───────────────────────────────────────────────────
+    # ── reject unknown keys ─────────────────────────────────────────────────
     unknown = config.keys() - ALLOWED_KEYS
     if unknown:
         raise ValueError(f"Unknown keys: {', '.join(sorted(unknown))}")
 
-    # ── WIDTH ─────────────────────────────────────────────────────────────────
+    # ── WIDTH ───────────────────────────────────────────────────────────────
     try:
         validated["WIDTH"] = int(config["WIDTH"])
     except ValueError:
@@ -144,7 +144,7 @@ def validate_config(config: dict[str, str]) -> dict:
     if validated["WIDTH"] < 3:
         raise ValueError("WIDTH must be at least 3")
 
-    # ── HEIGHT ────────────────────────────────────────────────────────────────
+    # ── HEIGHT ──────────────────────────────────────────────────────────────
     try:
         validated["HEIGHT"] = int(config["HEIGHT"])
     except ValueError:
@@ -152,7 +152,7 @@ def validate_config(config: dict[str, str]) -> dict:
     if validated["HEIGHT"] < 3:
         raise ValueError("HEIGHT must be at least 3")
 
-    # ── ENTRY ─────────────────────────────────────────────────────────────────
+    # ── ENTRY ───────────────────────────────────────────────────────────────
     try:
         ex, ey = config["ENTRY"].split(",")
         entry = (int(ex.strip()), int(ey.strip()))
@@ -168,7 +168,7 @@ def validate_config(config: dict[str, str]) -> dict:
         )
     validated["ENTRY"] = entry
 
-    # ── EXIT ──────────────────────────────────────────────────────────────────
+    # ── EXIT ────────────────────────────────────────────────────────────────
     try:
         xx, xy = config["EXIT"].split(",")
         exit_ = (int(xx.strip()), int(xy.strip()))
@@ -187,7 +187,7 @@ def validate_config(config: dict[str, str]) -> dict:
     if entry == exit_:
         raise ValueError("ENTRY and EXIT must not be the same cell")
 
-    # ── OUTPUT_FILE ───────────────────────────────────────────────────────────
+    # ── OUTPUT_FILE ─────────────────────────────────────────────────────────
     filename = config["OUTPUT_FILE"]
     try:
         Path(filename).write_text("")
@@ -197,13 +197,13 @@ def validate_config(config: dict[str, str]) -> dict:
         raise ValueError(f"Invalid OUTPUT_FILE path '{filename}': {e}")
     validated["OUTPUT_FILE"] = filename
 
-    # ── PERFECT ───────────────────────────────────────────────────────────────
+    # ── PERFECT ─────────────────────────────────────────────────────────────
     perfect = config["PERFECT"].strip().lower()
     if perfect not in ("true", "false"):
         raise ValueError("PERFECT must be 'True' or 'False'")
     validated["PERFECT"] = perfect == "true"
 
-    # ── SEED (optional, defaults to 42) ───────────────────────────────────────
+    # ── SEED (optional, defaults to 42) ─────────────────────────────────────
     if "SEED" in config:
         try:
             validated["SEED"] = int(config["SEED"])

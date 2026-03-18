@@ -3,8 +3,11 @@
 
 import random
 
-from .constants import NORTH, EAST, SOUTH, WEST, OPPOSITE, DIRECTION
+from .constants import OPPOSITE, DIRECTION
 from .constants import PATTERN_4, PATTERN_2
+from display import render_tui
+
+
 
 
 class MazeGenerator:
@@ -18,7 +21,8 @@ class MazeGenerator:
     """
 
     def __init__(
-        self, width: int, height: int, seed: int | None = None, perfect: bool = True
+        self, width: int, height: int,
+        seed: int | None = None, perfect: bool = True
     ) -> None:
         """Args:
             width:   Number of columns (>= 3).
@@ -26,14 +30,17 @@ class MazeGenerator:
             seed:    RNG seed for reproducibility. Random if None.
             perfect: True = one path between any two cells (no loops).
         """
-        self.width   = width
-        self.height  = height
-        self.seed    = seed if seed is not None else random.randint(0, 999_999)
+        self.width = width
+        self.height = height
+        self.seed = seed
         self.perfect = perfect
-        self.grid:   list[list[int]]      = [[0xF] * width for _ in range(height)]
+        self.grid: list[list[int]] = [[0xF] * width for _ in range(height)]
         self.locked: set[tuple[int, int]] = set()
 
-    # ── helpers ───────────────────────────────────────────────────────────────
+    def _reinit_grid(self) -> None:
+        self.grid: list[list[int]] = [[0xF] * self.width for _ in range(self.height)]
+
+    # ── helpers ─────────────────────────────────────────────────────────────
 
     def _in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
@@ -58,14 +65,14 @@ class MazeGenerator:
     def _stamp_42(self) -> None:
         """Lock cells forming the '42' pattern at the center of the maze."""
         pw, ph = len(PATTERN_4[0]), len(PATTERN_4)
-        total  = pw * 2
+        total = pw * 2
 
         if self.width < total + 2 or self.height < ph + 2:
             print("Warning: maze too small for '42' pattern — skipped.")
             return
 
-        sx = (self.width  - total) // 2
-        sy = (self.height - ph)    // 2
+        sx = (self.width - total) // 2
+        sy = (self.height - ph) // 2
 
         for row in range(ph):
             for col in range(pw):
@@ -90,14 +97,12 @@ class MazeGenerator:
                     ):
                         self._remove_wall(x, y, nx, ny, d)
 
-    # ── public API ────────────────────────────────────────────────────────────
+    # ── public API ──────────────────────────────────────────────────────────
 
     def generate(self) -> None:
         """Generate the maze in-place using iterative DFS."""
-        if self.seed is None:
-            random.seed(random.randint(0, 999_999))
-        else:
-            random.seed(self.seed)
+        self._reinit_grid()
+        random.seed(self.seed)  # None → system entropy (random); int →
         self._stamp_42()
 
         visited: set[tuple[int, int]] = {(0, 0)} | self.locked
@@ -127,4 +132,4 @@ if __name__ == "__main__":
     height = int(input("Enter height for the maze: "))
     mg = MazeGenerator(width, height)
     mg.generate()
-    render(mg.grid, mg.width, mg.height, locked=mg.locked)
+    render_tui(mg.grid, mg.width, mg.height, locked=mg.locked)

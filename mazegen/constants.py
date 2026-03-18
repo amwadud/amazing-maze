@@ -1,4 +1,4 @@
-# ── Wall bitmasks ─────────────────────────────────────────────────────────────
+# ── Wall bitmasks ───────────────────────────────────────────────────────────
 # Each cell stores a 4-bit integer. Each bit = one wall direction.
 # 1 = wall is closed (solid), 0 = wall is open (passage).
 #
@@ -11,12 +11,12 @@
 # A fully walled cell = 0b1111 = 0xF = 15.
 
 NORTH = 0b0001  # 1
-EAST  = 0b0010  # 2
+EAST = 0b0010  # 2
 SOUTH = 0b0100  # 4
-WEST  = 0b1000  # 8
+WEST = 0b1000  # 8
 
 
-# ── Opposites ─────────────────────────────────────────────────────────────────
+# ── Opposites ───────────────────────────────────────────────────────────────
 # When carving a passage between two cells, both must be updated.
 # Example: moving EAST removes the EAST wall of cell A
 #          AND the WEST wall of its neighbor cell B.
@@ -29,7 +29,7 @@ OPPOSITE: dict[int, int] = {
 }
 
 
-# ── Direction vectors ─────────────────────────────────────────────────────────
+# ── Direction vectors ───────────────────────────────────────────────────────
 # Maps each direction to a (dx, dy) grid offset.
 # Origin (0, 0) = top-left. Y increases downward.
 
@@ -40,7 +40,7 @@ DIRECTION: dict[int, tuple[int, int]] = {
     WEST:  (-1, 0),
 }
 
-# ── "42" pixel patterns ───────────────────────────────────────────────────────
+# ── "42" pixel patterns ─────────────────────────────────────────────────────
 # Two 5-row × 4-col grids of 1s and 0s.
 # 1 = locked cell (fully walled, shown as ▓▓▓ in the TUI).
 # 0 = normal maze cell.

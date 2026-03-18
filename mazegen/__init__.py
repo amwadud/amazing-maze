@@ -6,5 +6,5 @@ __all__ = [
     "parse_config",
     "validate_config",
     "MazeGenerator",
-    # "solver",
+    "maze_solver",
 ]
