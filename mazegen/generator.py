@@ -94,7 +94,10 @@ class MazeGenerator:
 
     def generate(self) -> None:
         """Generate the maze in-place using iterative DFS."""
-        random.seed(self.seed)
+        if self.seed is None:
+            random.seed(random.randint(0, 999_999))
+        else:
+            random.seed(self.seed)
         self._stamp_42()
 
         visited: set[tuple[int, int]] = {(0, 0)} | self.locked

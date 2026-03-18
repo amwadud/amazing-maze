@@ -96,7 +96,7 @@ def parse_config(fp: str) -> dict[str, str]:
 
     if not config:
         raise NoValidEntries("Config file is empty or contains only comments")
-    
+
     return config
 
 
@@ -210,6 +210,6 @@ def validate_config(config: dict[str, str]) -> dict:
         except ValueError:
             raise ValueError("SEED must be an integer")
     else:
-        validated["SEED"] = 42
+        validated["SEED"] = None
 
     return validated
