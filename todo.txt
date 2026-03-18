@@ -1,0 +1,2 @@
+1. Fix the error, when having the the entry, exist inside of the 42 pattern
+2. implement creating the maze.txt stuff

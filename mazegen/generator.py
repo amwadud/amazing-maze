@@ -8,8 +8,6 @@ from .constants import PATTERN_4, PATTERN_2
 from display import render_tui
 
 
-
-
 class MazeGenerator:
     """Maze generator using iterative DFS (recursive backtracker).
 
@@ -38,7 +36,8 @@ class MazeGenerator:
         self.locked: set[tuple[int, int]] = set()
 
     def _reinit_grid(self) -> None:
-        self.grid: list[list[int]] = [[0xF] * self.width for _ in range(self.height)]
+        self.grid: list[list[int]] = [[0xF]
+                                      * self.width for _ in range(self.height)]
 
     # ── helpers ─────────────────────────────────────────────────────────────
 
