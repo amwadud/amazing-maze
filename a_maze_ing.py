@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
-from mazegen import (
-    parse_config,
-    validate_config,
-    maze_solver,
-    MazeGenerator,
-    COLOR_THEMES,
-    submit_data,
-)
-
-from display import renderer_tui
 import os
 import random
+
+from ascii_map.data_submitter import submit_data
+from config import parse_config, validate_config
+from display import THEMES, renderer_tui
+from mazegen import MazeGenerator, maze_solver
 
 
 def main() -> None:
     config = validate_config(parse_config("config.txt"))
     maze = MazeGenerator(config["WIDTH"], config["HEIGHT"], config["SEED"])
     maze.generate()
-    theme = COLOR_THEMES[0]
+    theme = THEMES[37]
     show_path: bool = False
     path, path_directions = maze_solver(
         maze.grid, config["ENTRY"], config["EXIT"]
@@ -34,13 +29,15 @@ def main() -> None:
                 path if show_path else None,
                 config["ENTRY"],
                 config["EXIT"],
-                theme
+                theme,
             )
+            print(f"{theme['WALL_COLOR']}\033[49m", end="")
             print("1) Regenerate")
-            print("2) Change colors")
+            print(f"2) Change theme [current: {theme['name']}]")
             print("3) Toggle path")
             print("4) Quit")
             choice = input("Choose (based on number): ")
+            print("\033[0m")  # reset color
 
             if choice == "1":
                 maze.generate()
@@ -49,7 +46,7 @@ def main() -> None:
                 )
                 submit_data(config, maze, path_directions)
             elif choice == "2":
-                theme = random.choice([t for t in COLOR_THEMES if t != theme])
+                theme = random.choice([t for t in THEMES if t != theme])
             elif choice == "3":
                 show_path = False if show_path else True
 

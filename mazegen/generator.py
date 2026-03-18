@@ -3,9 +3,9 @@
 
 import random
 
-from .constants import OPPOSITE, DIRECTION
-from .constants import PATTERN_4, PATTERN_2
 from display import render_tui
+
+from .constants import DIRECTION, OPPOSITE, PATTERN_2, PATTERN_4
 
 
 class MazeGenerator:
@@ -19,14 +19,17 @@ class MazeGenerator:
     """
 
     def __init__(
-        self, width: int, height: int,
-        seed: int | None = None, perfect: bool = True
+        self,
+        width: int,
+        height: int,
+        seed: int | None = None,
+        perfect: bool = True,
     ) -> None:
         """Args:
-            width:   Number of columns (>= 3).
-            height:  Number of rows    (>= 3).
-            seed:    RNG seed for reproducibility. Random if None.
-            perfect: True = one path between any two cells (no loops).
+        width:   Number of columns (>= 3).
+        height:  Number of rows    (>= 3).
+        seed:    RNG seed for reproducibility. Random if None.
+        perfect: True = one path between any two cells (no loops).
         """
         self.width = width
         self.height = height
@@ -36,8 +39,9 @@ class MazeGenerator:
         self.locked: set[tuple[int, int]] = set()
 
     def _reinit_grid(self) -> None:
-        self.grid: list[list[int]] = [[0xF]
-                                      * self.width for _ in range(self.height)]
+        self.grid: list[list[int]] = [
+            [0xF] * self.width for _ in range(self.height)
+        ]
 
     # ── helpers ─────────────────────────────────────────────────────────────
 
@@ -76,7 +80,7 @@ class MazeGenerator:
         for row in range(ph):
             for col in range(pw):
                 if PATTERN_4[row][col]:
-                    self.locked.add((sx + col,      sy + row))
+                    self.locked.add((sx + col, sy + row))
                 if PATTERN_2[row][col]:
                     self.locked.add((sx + pw + col, sy + row))
 
@@ -105,7 +109,7 @@ class MazeGenerator:
         self._stamp_42()
 
         visited: set[tuple[int, int]] = {(0, 0)} | self.locked
-        stack:   list[tuple[int, int]] = [(0, 0)]
+        stack: list[tuple[int, int]] = [(0, 0)]
 
         while stack:
             x, y = stack[-1]

@@ -1,6 +1,6 @@
 from typing import Any
 
-from .generator import MazeGenerator
+from mazegen.generator import MazeGenerator
 
 
 def submit_data(

@@ -1,6 +1,6 @@
 # A-Maze-ing default configuration
-WIDTH=15
-HEIGHT=10
+WIDTH=20
+HEIGHT=18
 ENTRY=0,0
 EXIT=9,9
 OUTPUT_FILE=maze.txt

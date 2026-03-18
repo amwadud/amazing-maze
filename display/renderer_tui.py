@@ -1,83 +1,71 @@
-from mazegen.constants import NORTH, EAST, WEST
+from mazegen.constants import EAST, NORTH, WEST
 
 RESET = "\033[0m"
-EMPTY = "  "
+EMPTY = "  "  # two spaces — matches "██" width
 
 
 def _has(grid, x, y, d):
+    """Returns True if cell (x, y) has a wall in direction d."""
     return 0 <= y < len(grid) and 0 <= x < len(grid[0]) and grid[y][x] & d
 
 
-def _is_path_like(x, y, path, entry, exit_):
-    """True for any cell that should visually
-    connect through open corridors."""
+def _on_path(x, y, path, entry, exit_):
+    """Returns True if cell (x, y) is the entry, exit, or on the solution path."""
     return (x, y) in path or (x, y) == entry or (x, y) == exit_
 
 
-def _corridor(x1, y1, x2, y2, path, entry, exit_, theme):
-    """Return a path-colored gap if both sides of
-    an open corridor are on the path."""
-    if _is_path_like(x1, y1, path, entry, exit_) and _is_path_like(x2, y2,
-                                                                   path,
-                                                                   entry,
-                                                                   exit_):
+def _gap(x1, y1, x2, y2, path, entry, exit_, theme):
+    """Returns a colored gap if both neighboring cells are on the path, otherwise empty."""
+    # color the gap only if both neighboring cells are on the path
+    if _on_path(x1, y1, path, entry, exit_) and _on_path(
+        x2, y2, path, entry, exit_
+    ):
         return theme["PATH_COLOR"] + EMPTY + RESET
     return EMPTY
 
 
 def _cell(x, y, locked, path, entry, exit_, theme):
+    """Returns a colored string representing one maze cell."""
     if (x, y) == entry:
-        color = theme["ENTRY_COLOR"]
-    elif (x, y) == exit_:
-        color = theme["EXIT_COLOR"]
-    elif (x, y) in locked:
-        color = theme["LOCKED_COLOR"]
-    elif (x, y) in path:
-        color = theme["PATH_COLOR"]
-    else:
-        color = theme["CELL_COLOR"]
-    return color + EMPTY + RESET
+        return theme["ENTRY_COLOR"] + " S" + RESET
+    if (x, y) == exit_:
+        return theme["EXIT_COLOR"] + " E" + RESET
+    if (x, y) in locked:
+        return theme["LOCKED_COLOR"] + EMPTY + RESET
+    if (x, y) in path:
+        return theme["PATH_COLOR"] + EMPTY + RESET
+    return EMPTY
 
 
-def _render_top_wall_row(grid, w, y, path, entry, exit_, theme):
-    wall = theme["WALL_COLOR"] + "██" + RESET
-    segments = []
-    for x in range(w):
-        segments.append(wall)
-        has_north_wall = _has(grid, x, y, NORTH)
-        if has_north_wall:
-            segments.append(wall)
-        else:
-            segments.append(_corridor(x, y, x, y - 1, path,
-                                      entry, exit_, theme))
-    segments.append(wall)
-    print("".join(segments))
-
-
-def _render_cell_row(grid, w, y, locked, path, entry, exit_, theme):
-    wall = theme["WALL_COLOR"] + "██" + RESET
-    segments = []
-    for x in range(w):
-        has_west_wall = _has(grid, x, y, WEST)
-        if has_west_wall:
-            segments.append(wall)
-        else:
-            segments.append(_corridor(x, y, x - 1, y, path,
-                                      entry, exit_, theme))
-        segments.append(_cell(x, y, locked, path, entry, exit_, theme))
-    has_east_wall = _has(grid, w - 1, y, EAST)
-    segments.append(wall if has_east_wall else EMPTY)
-    print("".join(segments))
-
-
-def render_tui(grid, w, h, locked=None, path=None,
-               entry=None, exit_=None,  theme: dict[str, str] | None = None):
+def render_tui(
+    grid, w, h, locked=None, path=None, entry=None, exit_=None, theme=None
+):
+    """Renders the full maze in the terminal using block characters."""
     locked = locked or set()
     path = path or set()
+    wall = theme["WALL_COLOR"] + "██" + RESET
 
     for y in range(h):
-        _render_top_wall_row(grid, w, y, path, entry, exit_, theme)
-        _render_cell_row(grid, w, y, locked, path, entry, exit_, theme)
+        row = []
+        for x in range(w):
+            row.append(wall)
+            # open north = gap to cell above, closed = wall
+            if _has(grid, x, y, NORTH):
+                row.append(wall)
+            else:
+                row.append(_gap(x, y, x, y - 1, path, entry, exit_, theme))
+        row.append(wall)
+        print("".join(row))
 
-    wall = theme["WALL_COLOR"] + "██" + RESET
-    print(wall * (2 * w + 1))
+        row = []
+        for x in range(w):
+            # open west = gap to cell on the left, closed = wall
+            if _has(grid, x, y, WEST):
+                row.append(wall)
+            else:
+                row.append(_gap(x, y, x - 1, y, path, entry, exit_, theme))
+            row.append(_cell(x, y, locked, path, entry, exit_, theme))
+        row.append(wall if _has(grid, w - 1, y, EAST) else EMPTY)
+        print("".join(row))
+
+    print(wall * (2 * w + 1))  # bottom border
