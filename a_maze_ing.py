@@ -5,8 +5,9 @@ from mazegen import (
     maze_solver,
     MazeGenerator,
     COLOR_THEMES,
-    submit_data
+    submit_data,
 )
+
 from display import renderer_tui
 import os
 import random
@@ -21,7 +22,7 @@ def main() -> None:
     path, path_directions = maze_solver(
         maze.grid, config["ENTRY"], config["EXIT"]
     )
-
+    submit_data(config, maze, path_directions)
     try:
         while True:
             os.system("clear")
@@ -35,7 +36,6 @@ def main() -> None:
                 config["EXIT"],
                 theme
             )
-
             print("1) Regenerate")
             print("2) Change colors")
             print("3) Toggle path")
@@ -44,14 +44,12 @@ def main() -> None:
 
             if choice == "1":
                 maze.generate()
-                path, _ = maze_solver(
+                path, path_directions = maze_solver(
                     maze.grid, config["ENTRY"], config["EXIT"]
                 )
-                submit_data(config, path_directions)
-
+                submit_data(config, maze, path_directions)
             elif choice == "2":
                 theme = random.choice([t for t in COLOR_THEMES if t != theme])
-
             elif choice == "3":
                 show_path = False if show_path else True
 
